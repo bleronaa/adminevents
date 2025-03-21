@@ -31,6 +31,12 @@ const routes = [
     href: "/categories",
     color: "text-purple-500"
   },
+  {
+    label:"Registrations",
+    icon: Calendar,
+    href:"/registrations",
+    color: "text-yellow-500"
+  }
 ];
 
 export default function Sidebar() {
