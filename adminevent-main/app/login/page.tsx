@@ -14,19 +14,21 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      // Send login request to the API
-      const response = await axios.post("http://localhost:3000/api/auth/login", {
+      const response = await axios.post("http://localhost:3001/api/auth/login", {
         email,
         password,
       });
 
-      // Store the token in localStorage
-      localStorage.setItem("token", response.data.token);
+      const { token, user } = response.data;
+
+      // Store token in localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("userRole", user.role);
 
       // Redirect user to dashboard
       router.push("/dashboard");
     } catch (err: any) {
-      setError("Invalid credentials. Please try again.");
+      setError("Invalid credentials or unauthorized access.");
     }
   };
 
