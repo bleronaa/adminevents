@@ -12,23 +12,32 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
 
     try {
-      const response = await axios.post("http://localhost:3001/api/auth/login", {
-        email,
-        password,
-      });
+      const response = await axios.post("http://localhost:3001/api/auth/admin-login", { email, password });
 
-      const { token, user } = response.data;
+      if (response.status === 200) {
+        const user = response.data.user;
 
-      // Store token in localStorage
-      localStorage.setItem("token", token);
-      localStorage.setItem("userRole", user.role);
+        // Lista e adminëve të lejuar
+        const allowedAdmins = [
+          "blerona.tmava@umib.net",
+          "habib.tmava@umib.net",
+          "bleronatmava12@gmail.com",
+        ];
 
-      // Redirect user to dashboard
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError("Invalid credentials or unauthorized access.");
+        if (!allowedAdmins.includes(user.email)) {
+          setError("Access denied! Only admins are allowed.");
+          return;
+        }
+
+        // Ruaj token-in në localStorage ose cookies
+        localStorage.setItem("token", response.data.token);
+        router.push("/"); // Rruga ku do ridrejtohet pas login-it
+      }
+    } catch (err) {
+      setError("Invalid credentials or login failed.");
     }
   };
 

@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Users, Calendar, FolderTree, LayoutDashboard, ClipboardList } from "lucide-react";
+import { Users, Calendar, LayoutDashboard, ClipboardList } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -24,12 +24,6 @@ const routes = [
     icon: Calendar,
     href: "/events",
     color: "text-blue-500"
-  },
-  {
-    label: "Categories",
-    icon: FolderTree,
-    href: "/categories",
-    color: "text-violet-500"
   },
   {
     label: "Registrations",

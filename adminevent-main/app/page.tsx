@@ -48,10 +48,7 @@ export default function Dashboard() {
             Welcome back! Here's what's happening with your events.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Activity className="h-5 w-5 text-green-500" />
-          <span className="text-sm font-medium text-green-500">Live Updates</span>
-        </div>
+       
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -95,23 +92,6 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-purple-50 to-violet-50">
-          <div className="absolute top-0 right-0 p-3">
-            <ArrowUpRight className="h-6 w-6 text-purple-400 opacity-50" />
-          </div>
-          <div className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-purple-500 bg-opacity-10 rounded-2xl">
-                <FolderTree className="h-8 w-8 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-purple-600">Categories</p>
-                <h3 className="text-3xl font-bold text-gray-900">10</h3>
-                <p className="text-xs text-gray-500 mt-1">Available event categories</p>
-              </div>
-            </div>
-          </div>
-        </Card>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

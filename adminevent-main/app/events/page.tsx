@@ -10,12 +10,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, Trash, Search, Calendar, MapPin, Download, Activity } from "lucide-react";
+import { Plus, Pencil, Trash, Search, Calendar, MapPin, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 
-// Enhanced dummy data for development
-const DUMMY_EVENTS = [
+// Define the Event interface
+interface Event {
+  _id: number;
+  title: string;
+  date: string;
+  category: string;
+  location: string;
+  attendees: number;
+  image: string;
+}
+
+// Dummy data for testing purposes
+const DUMMY_EVENTS: Event[] = [
   {
     _id: 1,
     title: "Tech Conference 2025",
@@ -37,14 +48,15 @@ const DUMMY_EVENTS = [
 ];
 
 export default function EventsPage() {
-  const [events, setEvents] = useState(DUMMY_EVENTS);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [events, setEvents] = useState<Event[]>(DUMMY_EVENTS);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
+  // Fetch events from API
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const response = await fetch("http://localhost:3001/api/events");
-        const data = await response.json();
+        const data: Event[] = await response.json();
         setEvents(data);
       } catch (error) {
         console.error("Error fetching events:", error);
@@ -54,11 +66,28 @@ export default function EventsPage() {
     fetchEvents();
   }, []);
 
+  // Filter events based on search query
   const filteredEvents = events.filter(event =>
     event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     event.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
     event.location.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Handle delete event
+  const handleDelete = (id: number) => {
+    // Add your delete logic here
+    setEvents((prevEvents) => prevEvents.filter((event) => event._id !== id));
+  };
+
+  // Handle update event
+  const handleUpdate = (updatedEvent: Event) => {
+    // Add your update logic here
+    setEvents((prevEvents) =>
+      prevEvents.map((event) =>
+        event._id === updatedEvent._id ? updatedEvent : event
+      )
+    );
+  };
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">
@@ -72,10 +101,7 @@ export default function EventsPage() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Export Events
-          </Button>
+          
           <Button className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Add New Event
@@ -98,8 +124,6 @@ export default function EventsPage() {
             </div>
           </div>
         </Card>
-
-        
 
         <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-purple-50 to-violet-50">
           <div className="p-6">
@@ -179,15 +203,18 @@ export default function EventsPage() {
                     <span className="text-sm">{event.location}</span>
                   </div>
                 </TableCell>
-                
+
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" className="mr-2 hover:bg-gray-100">
+                  <Button variant="ghost"
+                   size="icon"
+                    className="mr-2 hover:bg-gray-100">
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                    onClick={() => handleDelete(event._id)}
                   >
                     <Trash className="h-4 w-4" />
                   </Button>
