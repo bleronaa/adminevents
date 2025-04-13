@@ -61,7 +61,7 @@ export default function RegistrationsPage() {
             {registrations.map((registration) => (
               <TableRow key={registration._id}>
                 <TableCell>{registration.user.name}</TableCell>
-                <TableCell>{registration.event.title}</TableCell>
+                <TableCell>{registration.event ? registration.event.title : 'N/A'}</TableCell>
                 <TableCell>{registration.status}</TableCell>
                 <TableCell className="text-right">
                   <Button variant="ghost" size="icon" className="mr-2">

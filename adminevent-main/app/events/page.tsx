@@ -10,46 +10,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, Trash, Search, Calendar, MapPin, Download } from "lucide-react";
+import { Plus, Pencil, Trash, Search, Calendar, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 
 // Define the Event interface
 interface Event {
-  _id: number;
+  _id: string;
   title: string;
   date: string;
   category: string;
   location: string;
   attendees: number;
-  image: string;
+  // image: string;
 }
 
-// Dummy data for testing purposes
-const DUMMY_EVENTS: Event[] = [
-  {
-    _id: 1,
-    title: "Tech Conference 2025",
-    date: "2025-03-15",
-    category: "Technology",
-    location: "Main Auditorium",
-    attendees: 120,
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=200&fit=crop"
-  },
-  {
-    _id: 2,
-    title: "Annual Career Fair",
-    date: "2025-04-20",
-    category: "Career",
-    location: "University Hall",
-    attendees: 250,
-    image: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&h=200&fit=crop"
-  }
-];
-
 export default function EventsPage() {
-  const [events, setEvents] = useState<Event[]>(DUMMY_EVENTS);
+  const [events, setEvents] = useState<Event[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+
 
   // Fetch events from API
   useEffect(() => {
@@ -74,25 +55,68 @@ export default function EventsPage() {
   );
 
   // Handle delete event
-  const handleDelete = (id: number) => {
-    // Add your delete logic here
-    setEvents((prevEvents) => prevEvents.filter((event) => event._id !== id));
+  const handleDelete = async (id: string) => {
+    console.log("Duke fshirë event me ID:", id);
+    try {
+      const res = await fetch(`http://localhost:3001/api/events/${id}`, {
+        method: "DELETE",
+      });
+  
+      if (res.ok) {
+        console.log("Event u fshi");
+        // Fshij eventin nga state pa pasur nevojë të rifreskosh nga API
+        setEvents((prevEvents) => prevEvents.filter((event) => event._id !== id));
+      } else {
+        console.log("Failed to delete event");
+      }
+    } catch (err) {
+      console.log("Error deleting", err);
+    }
   };
+  
+  
 
   // Handle update event
-  const handleUpdate = (updatedEvent: Event) => {
-    // Add your update logic here
-    setEvents((prevEvents) =>
-      prevEvents.map((event) =>
-        event._id === updatedEvent._id ? updatedEvent : event
-      )
-    );
+  const handleUpdate = async () => {
+    if (!editingEvent) return;
+  
+    try {
+      const response = await fetch(`http://localhost:3001/api/events/${editingEvent._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+  
+        },
+        body: JSON.stringify(editingEvent),
+      });
+  
+      if (!response.ok) {
+        const error = await response.json();
+        alert("Gabim: " + error.error);
+        return;
+      }
+  
+      const updated = await response.json();
+      setEvents((prev) =>
+        prev.map((e) => (e._id === updated._id ? updated : e))
+      );
+      setIsEditing(false);
+      setEditingEvent(null);
+    } catch (error) {
+      console.error("Gabim gjatë përditësimit:", error);
+    }
   };
+  
+  const handleEditClick = (event: Event) => {
+    setEditingEvent(event);
+    setIsEditing(true);
+  };
+  
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">
       <div className="flex items-center justify-between">
-        <div>
+        <div> 
           <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
             Events Management
           </h2>
@@ -101,7 +125,6 @@ export default function EventsPage() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          
           <Button className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Add New Event
@@ -172,11 +195,11 @@ export default function EventsPage() {
               <TableRow key={event._id} className="hover:bg-gray-50/50">
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <img
+                    {/* <img
                       src={event.image}
                       alt={event.title}
                       className="h-12 w-20 rounded-lg object-cover"
-                    />
+                    /> */}
                     <div>
                       <div className="font-medium">{event.title}</div>
                       <div className="text-sm text-gray-500">{event.attendees} attendees</div>
@@ -207,7 +230,8 @@ export default function EventsPage() {
                 <TableCell className="text-right">
                   <Button variant="ghost"
                    size="icon"
-                    className="mr-2 hover:bg-gray-100">
+                    className="mr-2 hover:bg-gray-100"
+                    onClick={() => handleEditClick(event)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
@@ -223,6 +247,47 @@ export default function EventsPage() {
             ))}
           </TableBody>
         </Table>
+        {isEditing && editingEvent && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl space-y-4">
+      <h2 className="text-lg font-bold">Përditëso Eventin</h2>
+
+      <Input
+        type="text"
+        name="title"
+        value={editingEvent.title}
+        onChange={(e) => setEditingEvent({ ...editingEvent, title: e.target.value })}
+        placeholder="Titulli"
+      />
+      <Input
+        type="text"
+        name="category"
+        value={editingEvent.category}
+        onChange={(e) => setEditingEvent({ ...editingEvent, category: e.target.value })}
+        placeholder="Kategoria"
+      />
+      <Input
+        type="text"
+        name="location"
+        value={editingEvent.location}
+        onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })}
+        placeholder="Lokacioni"
+      />
+      <Input
+        type="date"
+        name="date"
+        value={editingEvent.date.slice(0, 10)}
+        onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })}
+      />
+
+      <div className="flex justify-end gap-2 pt-4">
+        <Button variant="outline" onClick={() => setIsEditing(false)}>Anulo</Button>
+        <Button onClick={handleUpdate}>Ruaj</Button>
+      </div>
+    </div>
+  </div>
+)}
+
       </div>
     </div>
   );

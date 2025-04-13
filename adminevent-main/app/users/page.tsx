@@ -25,6 +25,13 @@ export default function UsersPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [editedUser, setEditedUser] = useState<User | null>(null);
+  const [newUser, setNewUser] = useState({
+    name: "",
+    email: "",
+    role: "",
+  });
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -105,7 +112,30 @@ export default function UsersPage() {
     setEditedUser(null);
     setIsOpen(false);
   };
-
+  const handleAddUser = async () => {
+    try {
+      const res = await fetch("http://localhost:3001/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newUser),
+      });
+  
+      if (res.ok) {
+        const createdUser = await res.json();
+        setUsers((prevUsers) => [...prevUsers, createdUser]);
+        setNewUser({ name: "", email: "", role: "" });
+        setIsAddDialogOpen(false);
+      } else {
+        const err = await res.json();
+        console.error("Gabim:", err.error);
+      }
+    } catch (error) {
+      console.error("Gabim gjatë shtimit të përdoruesit:", error);
+    }
+  };
+  
   const filteredUsers = users.filter(
     (user) =>
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -124,10 +154,11 @@ export default function UsersPage() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <Button className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Add User
-          </Button>
+        <Button className="flex items-center gap-2" onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Add User
+        </Button>
+
         </div>
       </div>
 
@@ -172,11 +203,11 @@ export default function UsersPage() {
               <TableRow key={user._id} className="hover:bg-gray-50/50">
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <img
+                    {/* <img
                       src={user.avatar}
                       alt={user.name}
                       className="h-8 w-8 rounded-full object-cover"
-                    />
+                    /> */}
                     <div>
                       <div className="font-medium">{user.name}</div>
                       <div className="text-sm text-gray-500">{user.email}</div>
@@ -268,6 +299,39 @@ export default function UsersPage() {
           </div>
         </Dialog>
       )}
+
+{isAddDialogOpen && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-md">
+      <h3 className="text-lg font-semibold mb-4">Add New User</h3>
+      <div className="space-y-4">
+        <Input
+          placeholder="Name"
+          value={newUser.name}
+          onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+        />
+        <Input
+          placeholder="Email"
+          type="email"
+          value={newUser.email}
+          onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+        />
+        <Input
+          placeholder="Role"
+          value={newUser.role}
+          onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+        />
+      </div>
+      <div className="flex justify-end gap-2 mt-6">
+        <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)}>
+          Cancel
+        </Button>
+        <Button onClick={handleAddUser}>Add</Button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
