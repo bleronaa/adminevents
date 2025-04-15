@@ -15,8 +15,7 @@ interface User {
   email: string;
   role: string;
   status: string;
-  lastActive: string;
-  avatar: string;
+  password: string;
 }
 
 export default function UsersPage() {
@@ -29,6 +28,7 @@ export default function UsersPage() {
     name: "",
     email: "",
     role: "",
+    password: ""
   });
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
@@ -112,29 +112,34 @@ export default function UsersPage() {
     setEditedUser(null);
     setIsOpen(false);
   };
-  const handleAddUser = async () => {
+
+  const handleAddUser = async (userData: {
+    name: string;
+    email: string;
+    role: string;
+    password: string;
+  }) => {
     try {
-      const res = await fetch("http://localhost:3001/api/users", {
-        method: "POST",
+      const response = await fetch('http://localhost:3001/api/users', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newUser),
+        body: JSON.stringify(userData),
       });
   
-      if (res.ok) {
-        const createdUser = await res.json();
-        setUsers((prevUsers) => [...prevUsers, createdUser]);
-        setNewUser({ name: "", email: "", role: "" });
-        setIsAddDialogOpen(false);
-      } else {
-        const err = await res.json();
-        console.error("Gabim:", err.error);
+      if (!response.ok) {
+        throw new Error('Failed to add user');
       }
+  
+      const result = await response.json();
+      console.log('User added:', result);
     } catch (error) {
-      console.error("Gabim gjatë shtimit të përdoruesit:", error);
+      console.error('Error:', error);
     }
   };
+  
+  
   
   const filteredUsers = users.filter(
     (user) =>
@@ -302,35 +307,80 @@ export default function UsersPage() {
 
 {isAddDialogOpen && (
   <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-    <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-md">
-      <h3 className="text-lg font-semibold mb-4">Add New User</h3>
+    <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
+      <h2 className="text-xl font-semibold mb-4">Add New User</h2>
       <div className="space-y-4">
-        <Input
-          placeholder="Name"
-          value={newUser.name}
-          onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-        />
-        <Input
-          placeholder="Email"
-          type="email"
-          value={newUser.email}
-          onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-        />
-        <Input
-          placeholder="Role"
-          value={newUser.role}
-          onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-        />
+        <div>
+          <label className="block text-sm font-medium">Name</label>
+          <Input
+            placeholder="Enter name"
+            value={newUser.name}
+            onChange={(e) =>
+              setNewUser((prev) => ({ ...prev, name: e.target.value }))
+            }
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Email</label>
+          <Input
+            placeholder="Enter email"
+            value={newUser.email}
+            onChange={(e) =>
+              setNewUser((prev) => ({ ...prev, email: e.target.value }))
+            }
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Role</label>
+          <Input
+            placeholder="Enter role"
+            value={newUser.role}
+            onChange={(e) =>
+              setNewUser((prev) => ({ ...prev, role: e.target.value }))
+            }
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Password</label>
+          <Input
+            placeholder="Enter password"
+            type="password"
+            onChange={(e) =>
+              setNewUser((prev) => ({ ...prev, password: e.target.value }))
+            }
+          />
+        </div>
       </div>
-      <div className="flex justify-end gap-2 mt-6">
-        <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)}>
+      <div className="mt-6 flex justify-end">
+        <Button
+          variant="outline"
+          onClick={() => {
+            setIsAddDialogOpen(false);
+            setNewUser({ name: "", email: "", role: "", password: "" });
+          }}
+        >
           Cancel
         </Button>
-        <Button onClick={handleAddUser}>Add</Button>
+        <Button
+          className="ml-2"
+          onClick={async () => {
+            await handleAddUser({ ...newUser, password: newUser.password || "defaultPass123" });
+            setIsAddDialogOpen(false);
+            setNewUser({ name: "", email: "", role: "", password: "" });
+            // Refresh users after adding
+            const response = await fetch("http://localhost:3001/api/users");
+            const data = await response.json();
+            setUsers(data);
+          }}
+        >
+          Add
+        </Button>
       </div>
     </div>
   </div>
 )}
+
+
 
     </div>
   );

@@ -21,7 +21,7 @@ interface Event {
   date: string;
   category: string;
   location: string;
-  attendees: number;
+  capacity: number;
   // image: string;
 }
 
@@ -31,6 +31,16 @@ export default function EventsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
 
+   // State for managing new event modal and form data
+   const [isAdding, setIsAdding] = useState(false);
+   const [newEvent, setNewEvent] = useState<Event>({
+     _id: "",
+     title: "",
+     date: "",
+     category: "",
+     location: "",
+     capacity: 0,
+   });
 
   // Fetch events from API
   useEffect(() => {
@@ -112,6 +122,47 @@ export default function EventsPage() {
     setIsEditing(true);
   };
   
+    // Handle add new event modal toggle
+    const handleAddNewEvent = () => {
+      setIsAdding(!isAdding);
+    };
+  
+      // Handle form input change for new event
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
+    setNewEvent({ ...newEvent, [field]: e.target.value });
+  };
+
+   // Handle creating a new event
+  
+  const handleCreateEvent = async () => {
+  try {
+    const response = await fetch("http://localhost:3001/api/events", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newEvent), // Dërgoni të dhënat e eventit që përdoruesi ka futur
+    });
+
+    if (response.ok) {
+      const createdEvent = await response.json();
+      setEvents((prev) => [...prev, createdEvent]); // Shto eventin e krijuar në listën ekzistuese
+      setIsAdding(false); // Mbyll modalin
+      setNewEvent({
+        _id: "",
+        title: "",
+        date: "",
+        category: "",
+        location: "",
+        capacity: 0,
+      }); // Pastro formularin
+    } else {
+      console.error("Failed to create event");
+    }
+  } catch (error) {
+    console.error("Error creating event:", error);
+  }
+};
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">
@@ -125,12 +176,56 @@ export default function EventsPage() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <Button className="flex items-center gap-2">
+          <Button className="flex items-center gap-2"
+            onClick={handleAddNewEvent}>
             <Plus className="h-4 w-4" />
             Add New Event
           </Button>
         </div>
       </div>
+      {isAdding && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl space-y-4">
+            <h2 className="text-lg font-bold">Add New Event</h2>
+
+            <Input
+              type="text"
+              value={newEvent.title}
+              onChange={(e) => handleInputChange(e, "title")}
+              placeholder="Title"
+            />
+            <Input
+              type="text"
+              value={newEvent.category}
+              onChange={(e) => handleInputChange(e, "category")}
+              placeholder="Category"
+            />
+            <Input
+              type="text"
+              value={newEvent.location}
+              onChange={(e) => handleInputChange(e, "location")}
+              placeholder="Location"
+            />
+            <Input
+              type="date"
+              value={newEvent.date}
+              onChange={(e) => handleInputChange(e, "date")}
+            />
+            <Input
+              type="number"
+              value={newEvent.capacity}
+              onChange={(e) => handleInputChange(e, "capacity")}
+              placeholder="Capacity"
+            />
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={handleAddNewEvent}>Cancel</Button>
+              <Button onClick={handleCreateEvent}>Save</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -202,7 +297,7 @@ export default function EventsPage() {
                     /> */}
                     <div>
                       <div className="font-medium">{event.title}</div>
-                      <div className="text-sm text-gray-500">{event.attendees} attendees</div>
+                      <div className="text-sm text-gray-500">{event.capacity} attendees</div>
                     </div>
                   </div>
                 </TableCell>
