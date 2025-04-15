@@ -29,16 +29,27 @@ export default function RegistrationsPage() {
   useEffect(() => {
     const fetchRegistrations = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/registrations");
+        const token = localStorage.getItem("token"); // Adjust key as needed
+        const response = await fetch("http://localhost:3001/api/registrations", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        if (!response.ok) {
+          throw new Error("Unauthorized");
+        }
+  
         const data = await response.json();
         setRegistrations(data);
       } catch (error) {
         console.error("Failed to load registrations:", error);
       }
     };
-
+  
     fetchRegistrations();
   }, []);
+  ;
 
   const handleDeleteRegistration = (id: string) => {
     setRegistrations(registrations.filter((registration) => registration._id !== id));

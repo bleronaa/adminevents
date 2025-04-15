@@ -1,8 +1,8 @@
+// Sidebar.tsx
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Users, Calendar, LayoutDashboard, ClipboardList } from "lucide-react";
+import { Calendar, LayoutDashboard, Users, ClipboardList, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -11,26 +11,26 @@ const routes = [
     label: "Dashboard",
     icon: LayoutDashboard,
     href: "/",
-    color: "text-indigo-500"
+    color: "text-indigo-500",
   },
   {
     label: "Users",
     icon: Users,
     href: "/users",
-    color: "text-emerald-500"
+    color: "text-emerald-500",
   },
   {
     label: "Events",
     icon: Calendar,
     href: "/events",
-    color: "text-blue-500"
+    color: "text-blue-500",
   },
   {
     label: "Registrations",
     icon: ClipboardList,
     href: "/registrations",
-    color: "text-amber-500"
-  }
+    color: "text-amber-500",
+  },
 ];
 
 export default function Sidebar() {
@@ -60,16 +60,20 @@ export default function Sidebar() {
               "group relative overflow-hidden"
             )}
           >
-            <route.icon 
+            <route.icon
               className={cn(
                 "h-5 w-5 transition-colors duration-200",
-                pathname === route.href ? route.color : "text-gray-400 group-hover:text-gray-600"
-              )} 
+                pathname === route.href
+                  ? route.color
+                  : "text-gray-400 group-hover:text-gray-600"
+              )}
             />
-            <span className={cn(
-              "transition-colors duration-200",
-              pathname === route.href ? "text-gray-900" : "group-hover:text-gray-900"
-            )}>
+            <span
+              className={cn(
+                "transition-colors duration-200",
+                pathname === route.href ? "text-gray-900" : "group-hover:text-gray-900"
+              )}
+            >
               {route.label}
             </span>
             {pathname === route.href && (
@@ -79,18 +83,14 @@ export default function Sidebar() {
         ))}
       </div>
 
+      {/* Admin Profile Icon at bottom */}
       <div className="p-4 mt-auto">
-        <div className="rounded-xl bg-gray-50 p-4 border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-indigo-600/10 flex items-center justify-center">
-              <Users className="h-5 w-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900">Admin Portal</p>
-              <p className="text-xs text-gray-500">Manage your university events</p>
-            </div>
-          </div>
-        </div>
+        <Link
+          href="/admin-profile"
+          className="flex items-center justify-center w-full p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition"
+        >
+          <UserCircle className="w-6 h-6 text-indigo-600" />
+        </Link>
       </div>
     </div>
   );

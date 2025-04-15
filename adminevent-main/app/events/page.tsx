@@ -22,6 +22,7 @@ interface Event {
   category: string;
   location: string;
   capacity: number;
+
   // image: string;
 }
 
