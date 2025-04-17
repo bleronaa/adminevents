@@ -1,6 +1,4 @@
-import type { Config } from 'tailwindcss';
-
-const config: Config = {
+module.exports = {
   darkMode: ['class'],
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
@@ -60,6 +58,8 @@ const config: Config = {
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
         },
+        // Add dark blue to colors
+        'dark-blue': '#030a1f', // Dark blue color code
       },
       keyframes: {
         'accordion-down': {
@@ -87,4 +87,3 @@ const config: Config = {
   },
   plugins: [require('tailwindcss-animate')],
 };
-export default config;

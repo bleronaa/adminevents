@@ -3,14 +3,23 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { Users, Calendar, FolderTree, ArrowUpRight, Activity } from "lucide-react";
+import { Users, Calendar, ArrowUpRight } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function Dashboard() {
   const router = useRouter();
   const [totalEvents, setTotalEvents] = useState<number | null>(null);
   const [totalUsers, setTotalUsers] = useState<number | null>(null);
 
+  // Kontrollo nëse përdoruesi është loguar
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.push("/login"); // Ridrejtoje në login nëse nuk ka token
+    }
+
+    // Nëse ka token, ekzekuto aplikimin
     const fetchTotalEvents = async () => {
       try {
         const response = await fetch("http://localhost:3001/api/events/total-events");
@@ -37,95 +46,93 @@ export default function Dashboard() {
     fetchTotalUsers();
   }, [router]);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // Fshije token-in nga localStorage
+    router.push("/login"); // Ridrejtoje në login pas logout-it
+  };
+
   return (
-    <div className="flex-1 space-y-6 p-8 pt-6">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 p-8 pt-6 bg-gradient-to-r from-indigo-50 to-blue-100">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-            Dashboard Overview
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Welcome back! Here's what's happening with your events.
-          </p>
+          <h2 className="text-4xl font-extrabold text-gray-800">Dashboard</h2>
+          <p className="text-lg text-gray-600 mt-1">Your platform's performance at a glance</p>
         </div>
-       
+        <button 
+          onClick={handleLogout}
+          className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg"
+        >
+          Logout
+        </button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <Card className="relative bg-gradient-to-br from-indigo-100 to-blue-50 shadow-xl rounded-lg overflow-hidden">
           <div className="absolute top-0 right-0 p-3">
             <ArrowUpRight className="h-6 w-6 text-blue-400 opacity-50" />
           </div>
           <div className="p-6">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-blue-500 bg-opacity-10 rounded-2xl">
+              <div className="p-3 bg-blue-500 bg-opacity-20 rounded-full">
                 <Users className="h-8 w-8 text-blue-600" />
               </div>
               <div>
                 <p className="text-sm font-medium text-blue-600">Total Users</p>
                 <h3 className="text-3xl font-bold text-gray-900">
-                  {totalUsers !== null ? totalUsers.toLocaleString() : "..."}
+                  {totalUsers !== null ? totalUsers.toLocaleString() : "Loading..."}
                 </h3>
-                <p className="text-xs text-gray-500 mt-1">Active members in your platform</p>
               </div>
             </div>
           </div>
         </Card>
 
-        <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-green-50 to-emerald-50">
+        <Card className="relative bg-gradient-to-br from-green-100 to-emerald-50 shadow-xl rounded-lg overflow-hidden">
           <div className="absolute top-0 right-0 p-3">
             <ArrowUpRight className="h-6 w-6 text-green-400 opacity-50" />
           </div>
           <div className="p-6">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-green-500 bg-opacity-10 rounded-2xl">
+              <div className="p-3 bg-green-500 bg-opacity-20 rounded-full">
                 <Calendar className="h-8 w-8 text-green-600" />
               </div>
               <div>
                 <p className="text-sm font-medium text-green-600">Total Events</p>
                 <h3 className="text-3xl font-bold text-gray-900">
-                  {totalEvents !== null ? totalEvents.toLocaleString() : "..."}
+                  {totalEvents !== null ? totalEvents.toLocaleString() : "Loading..."}
                 </h3>
-                <p className="text-xs text-gray-500 mt-1">Events created in the platform</p>
               </div>
             </div>
           </div>
         </Card>
-
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-          <div className="space-y-4">
-            {[1, 2, 3].map((_, i) => (
-              <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-gray-50">
-                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">New event created</p>
-                  <p className="text-xs text-gray-500">2 hours ago</p>
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="grid gap-6 md:grid-cols-2 mt-8">
+        {/* Users Bar Chart */}
+        <Card className="p-6 bg-white shadow-xl rounded-lg">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800">Total Users</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={[{ name: "Users", value: totalUsers || 0 }]}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="value" fill="#3b82f6" barSize={60} />
+            </BarChart>
+          </ResponsiveContainer>
         </Card>
 
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Quick Stats</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
-              <span className="text-sm font-medium">Active Events</span>
-              <span className="text-sm font-bold text-green-600">24</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
-              <span className="text-sm font-medium">Today's Registrations</span>
-              <span className="text-sm font-bold text-blue-600">12</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
-              <span className="text-sm font-medium">Pending Approvals</span>
-              <span className="text-sm font-bold text-orange-600">5</span>
-            </div>
-          </div>
+        {/* Events Bar Chart */}
+        <Card className="p-6 bg-white shadow-xl rounded-lg">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800">Total Events</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={[{ name: "Events", value: totalEvents || 0 }]}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="value" fill="#10b981" barSize={60} />
+            </BarChart>
+          </ResponsiveContainer>
         </Card>
       </div>
     </div>

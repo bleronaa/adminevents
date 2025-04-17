@@ -1,4 +1,3 @@
-// Sidebar.tsx
 "use client";
 
 import { cn } from "@/lib/utils";
@@ -11,13 +10,13 @@ const routes = [
     label: "Dashboard",
     icon: LayoutDashboard,
     href: "/",
-    color: "text-indigo-500",
+    color: "text-blue-400",
   },
   {
     label: "Users",
     icon: Users,
     href: "/users",
-    color: "text-emerald-500",
+    color: "text-blue-300",
   },
   {
     label: "Events",
@@ -29,7 +28,7 @@ const routes = [
     label: "Registrations",
     icon: ClipboardList,
     href: "/registrations",
-    color: "text-amber-500",
+    color: "text-blue-600",
   },
 ];
 
@@ -37,17 +36,15 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-gray-100">
-      <div className="p-6">
-        <Link href="/" className="flex items-center gap-2">
-          <Calendar className="h-8 w-8 text-indigo-600" />
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-indigo-400 bg-clip-text text-transparent">
-            UniEvents
-          </h1>
-        </Link>
+    <div className="flex flex-col h-full bg-dark-blue border-r border-gray-800">
+      <div className="p-6 flex items-center gap-3">
+        <Calendar className="h-8 w-8 text-blue-400" />
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
+          UniEvents
+        </h1>
       </div>
 
-      <div className="flex-1 px-4 space-y-2">
+      <div className="flex-1 px-4 space-y-2 mt-4">
         {routes.map((route) => (
           <Link
             key={route.href}
@@ -55,9 +52,9 @@ export default function Sidebar() {
             className={cn(
               "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200",
               pathname === route.href
-                ? "bg-gray-50 shadow-sm border border-gray-100"
-                : "text-gray-600 hover:bg-gray-50/50",
-              "group relative overflow-hidden"
+                ? "bg-blue-900 shadow-lg border-l-4 border-blue-400 text-white"
+                : "text-gray-300 hover:bg-blue-700/50 hover:text-white",
+              "group relative"
             )}
           >
             <route.icon
@@ -65,32 +62,22 @@ export default function Sidebar() {
                 "h-5 w-5 transition-colors duration-200",
                 pathname === route.href
                   ? route.color
-                  : "text-gray-400 group-hover:text-gray-600"
+                  : "text-gray-500 group-hover:text-white"
               )}
             />
             <span
               className={cn(
                 "transition-colors duration-200",
-                pathname === route.href ? "text-gray-900" : "group-hover:text-gray-900"
+                pathname === route.href ? "text-white font-semibold" : "group-hover:text-white"
               )}
             >
               {route.label}
             </span>
             {pathname === route.href && (
-              <div className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-indigo-600" />
+              <div className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-blue-400" />
             )}
           </Link>
         ))}
-      </div>
-
-      {/* Admin Profile Icon at bottom */}
-      <div className="p-4 mt-auto">
-        <Link
-          href="/admin-profile"
-          className="flex items-center justify-center w-full p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition"
-        >
-          <UserCircle className="w-6 h-6 text-indigo-600" />
-        </Link>
       </div>
     </div>
   );

@@ -23,7 +23,6 @@ export default function Login() {
         // Lista e adminëve të lejuar
         const allowedAdmins = [
           "blerona.tmava@umib.net",
-          "habib.tmava@umib.net",
           "bleronatmava12@gmail.com",
         ];
 
