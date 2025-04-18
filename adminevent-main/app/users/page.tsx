@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Pencil, Trash, Search, Users } from "lucide-react";
@@ -18,6 +19,7 @@ interface User {
 }
 
 export default function UsersPage() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -30,8 +32,19 @@ export default function UsersPage() {
     password: ""
   });
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [tokenExists, setTokenExists] = useState(false);
+
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    setTokenExists(true); // Tregon që ekziston tokeni
+
     const fetchUsers = async () => {
       try {
         const response = await fetch("http://localhost:3001/api/users");
@@ -148,58 +161,68 @@ export default function UsersPage() {
             />
           </div>
         </div>
-        <Table className="divide-y divide-gray-200 table-auto w-full">
-          <TableHeader>
-            <TableRow className="bg-gray-100">
-              <TableHead className="text-left text-sm font-semibold text-gray-600 py-3 px-4">User</TableHead>
-              <TableHead className="text-left text-sm font-semibold text-gray-600 py-3 px-4">Role</TableHead>
-              <TableHead className="text-right text-sm font-semibold text-gray-600 py-3 px-4">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUsers.map((user) => (
-              <TableRow key={user._id} className="hover:bg-gray-100 transition-all duration-200">
-                <TableCell className="py-4 px-4">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <div className="font-medium text-gray-800">{user.name}</div>
-                      <div className="text-sm text-gray-500">{user.email}</div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="py-4 px-4">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      user.role === "Admin"
-                        ? "bg-purple-100 text-purple-800"
-                        : "bg-blue-100 text-blue-800"
-                    }`}
-                  >
-                    {user.role}
-                  </span>
-                </TableCell>
-                <TableCell className="py-4 px-4 text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="mr-2 hover:bg-gray-100 text-blue-500"
-                    onClick={() => handleEditUser(user)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                    onClick={() => handleDeleteUser(user._id)}
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+<Table className="min-w-full table-auto">
+  <TableHeader>
+    <TableRow className="bg-gray-50 border-b">
+      <TableHead className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">
+        User
+      </TableHead>
+      <TableHead className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">
+        Role
+      </TableHead>
+      <TableHead className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">
+        Actions
+      </TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    {filteredUsers.map((user) => (
+      <TableRow
+        key={user._id}
+        className="bg-white hover:shadow-md transition-shadow duration-200 rounded-lg"
+      >
+        <TableCell className="px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="text-sm font-medium text-gray-900">{user.name}</div>
+            <div className="text-sm text-gray-500">{user.email}</div>
+          </div>
+        </TableCell>
+        <TableCell className="px-6 py-4">
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              user.role === "Admin"
+                ? "bg-purple-100 text-purple-800"
+                : "bg-blue-100 text-blue-800"
+            }`}
+          >
+            {user.role}
+          </span>
+        </TableCell>
+        <TableCell className="px-6 py-4 text-right">
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-blue-600 hover:text-blue-800"
+              onClick={() => handleEditUser(user)}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-red-500 hover:text-red-700"
+              onClick={() => handleDeleteUser(user._id)}
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+    ))}
+  </TableBody>
+</Table>
+
       </div>
 
       {/* Edit Dialog */}

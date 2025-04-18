@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -21,12 +22,23 @@ interface Registration {
 }
 
 export default function RegistrationsPage() {
+  const router = useRouter();
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
   const [newStatus, setNewStatus] = useState<"pending" | "confirmed" | "cancelled">("pending");
+  const [tokenExists, setTokenExists] = useState(false);
+
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    setTokenExists(true); // Tregon që ekziston tokeni
     const fetchRegistrations = async () => {
       try {
         const token = localStorage.getItem("token"); // Adjust key as needed

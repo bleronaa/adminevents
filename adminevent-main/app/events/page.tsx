@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -28,10 +30,13 @@ interface Event {
 }
 
 export default function EventsPage() {
+  const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
+  const [tokenExists, setTokenExists] = useState(false);
+  
 
   // State for managing new event modal and form data
   const [isAdding, setIsAdding] = useState(false);
@@ -55,6 +60,14 @@ export default function EventsPage() {
 
   // Fetch events from API
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    setTokenExists(true); // Tregon që ekziston tokeni
     const fetchEvents = async () => {
       try {
         const response = await fetch("http://localhost:3001/api/events");
@@ -199,12 +212,12 @@ export default function EventsPage() {
             Organize and manage your university events
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        {/* <div className="flex items-center gap-4">
           <Button className="flex items-center gap-2" onClick={handleAddNewEvent}>
             <Plus className="h-4 w-4" />
             Add New Event
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* Add New Event Modal */}

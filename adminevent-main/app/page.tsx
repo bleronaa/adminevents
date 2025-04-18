@@ -8,18 +8,21 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 export default function Dashboard() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [tokenExists, setTokenExists] = useState(false);
   const [totalEvents, setTotalEvents] = useState<number | null>(null);
   const [totalUsers, setTotalUsers] = useState<number | null>(null);
 
-  // Kontrollo nëse përdoruesi është loguar
   useEffect(() => {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      router.push("/login"); // Ridrejtoje në login nëse nuk ka token
+      router.push("/login");
+      return;
     }
 
-    // Nëse ka token, ekzekuto aplikimin
+    setTokenExists(true); // Tregon që ekziston tokeni
+
     const fetchTotalEvents = async () => {
       try {
         const response = await fetch("http://localhost:3001/api/events/total-events");
@@ -42,14 +45,23 @@ export default function Dashboard() {
       }
     };
 
-    fetchTotalEvents();
-    fetchTotalUsers();
+    Promise.all([fetchTotalEvents(), fetchTotalUsers()]).finally(() => {
+      setLoading(false);
+    });
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token"); // Fshije token-in nga localStorage
-    router.push("/login"); // Ridrejtoje në login pas logout-it
+    localStorage.removeItem("token");
+    router.push("/login");
   };
+
+  if (loading && tokenExists) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-indigo-50 to-blue-100">
+        <div className="text-lg font-semibold text-gray-700">Loading dashboard...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 p-8 pt-6 bg-gradient-to-r from-indigo-50 to-blue-100">
