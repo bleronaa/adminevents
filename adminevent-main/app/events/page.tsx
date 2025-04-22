@@ -36,6 +36,8 @@ export default function EventsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const [tokenExists, setTokenExists] = useState(false);
+  const [isDeleteConfirm, setIsDeleteConfirm] = useState<string | null>(null); 
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
   
 
   // State for managing new event modal and form data
@@ -96,18 +98,26 @@ export default function EventsPage() {
       const res = await fetch(`http://localhost:3001/api/events/${id}`, {
         method: "DELETE",
       });
-
+  
       if (res.ok) {
         console.log("Event u fshi");
         // Fshij eventin nga state pa pasur nevojë të rifreskosh nga API
         setEvents((prevEvents) => prevEvents.filter((event) => event._id !== id));
+        setDeleteSuccess(true); // Shfaq mesazhin e suksesit
+  
+        // Mbyll modalin e konfirmimit
+        setIsDeleteConfirm(null);
       } else {
-        console.log("Failed to delete event");
+        console.log("Dështoi fshirja e eventit");
       }
     } catch (err) {
       console.log("Error deleting", err);
     }
   };
+    // Handle cancel delete
+    const cancelDelete = () => {
+      setIsDeleteConfirm(null);
+    };
 
   // Handle update event
   const handleUpdate = async () => {
@@ -206,10 +216,10 @@ export default function EventsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-            Events Management
+            Menaxhimi i enteve
           </h2>
           <p className="text-sm text-gray-500 mt-1">
-            Organize and manage your university events
+           Organizo dhe menaxho eventet ne universitet
           </p>
         </div>
         {/* <div className="flex items-center gap-4">
@@ -220,28 +230,54 @@ export default function EventsPage() {
         </div> */}
       </div>
 
+
+      {/* Success Message */}
+      {deleteSuccess && (
+        <div className="p-4 mb-4 bg-green-100 text-green-700 rounded">
+          Eventi u fshi me sukses!
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl space-y-4">
+            <h2 className="text-lg font-bold">A jeni të sigurt?</h2>
+            <p>A dëshironi ta fshini këtë event? Nuk mund të ktheheni pas.</p>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={cancelDelete}>
+                Largo
+              </Button>
+              <Button onClick={() => handleDelete(isDeleteConfirm)}>
+                Fshij
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add New Event Modal */}
       {isAdding && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl space-y-4">
-            <h2 className="text-lg font-bold">Add New Event</h2>
+            <h2 className="text-lg font-bold">Shto një event te ri</h2>
             <Input
               type="text"
               value={newEvent.title}
               onChange={(e) => handleInputChange(e, "title")}
-              placeholder="Title"
+              placeholder="Titulli"
             />
             <Input
               type="text"
               value={newEvent.category}
               onChange={(e) => handleInputChange(e, "category")}
-              placeholder="Category"
+              placeholder="Kategoria"
             />
             <Input
               type="text"
               value={newEvent.location}
               onChange={(e) => handleInputChange(e, "location")}
-              placeholder="Location"
+              placeholder="Lokacioni"
             />
             <Input
               type="date"
@@ -252,7 +288,7 @@ export default function EventsPage() {
               type="number"
               value={newEvent.capacity}
               onChange={(e) => handleInputChange(e, "capacity")}
-              placeholder="Capacity"
+              placeholder="Kapaciteti"
             />
             
             {/* File Input per imazhin e eventit */}
@@ -262,7 +298,7 @@ export default function EventsPage() {
               <Button variant="outline" onClick={handleAddNewEvent}>
                 Cancel
               </Button>
-              <Button onClick={handleCreateEvent}>Save</Button>
+              <Button onClick={handleCreateEvent}>Ruaj</Button>
             </div>
           </div>
         </div>
@@ -277,11 +313,11 @@ export default function EventsPage() {
                 <Calendar className="h-8 w-8 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-blue-600">Total Events</p>
+                <p className="text-sm font-medium text-blue-600">Eventet totale</p>
                 <h3 className="text-3xl font-bold text-gray-900">
                   {events.length}
                 </h3>
-                <p className="text-xs text-gray-500 mt-1">Active events this month</p>
+            
               </div>
             </div>
           </div>
@@ -294,11 +330,11 @@ export default function EventsPage() {
                 <MapPin className="h-8 w-8 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-purple-600">Locations</p>
+                <p className="text-sm font-medium text-purple-600">Lokacionet</p>
                 <h3 className="text-3xl font-bold text-gray-900">
                   {new Set(events.map((e) => e.location)).size}
                 </h3>
-                <p className="text-xs text-gray-500 mt-1">Unique venues</p>
+                <p className="text-xs text-gray-500 mt-1">Vende unike</p>
               </div>
             </div>
           </div>
@@ -312,7 +348,7 @@ export default function EventsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search events..."
+                placeholder="Kërkoni eventet..."
                 className="pl-9 bg-gray-50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -323,11 +359,11 @@ export default function EventsPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead>Event Details</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Detajet e eventit</TableHead>
+              <TableHead>Kategoria</TableHead>
+              <TableHead>Data</TableHead>
+              <TableHead>Lokacioni</TableHead>
+              <TableHead className="text-right">Veprimet</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -339,7 +375,7 @@ export default function EventsPage() {
                     <div>
                       <div className="font-medium">{event.title}</div>
                       <div className="text-sm text-gray-500">
-                        {event.capacity} attendees
+                        {event.capacity} të pranishëm
                       </div>
                     </div>
                   </div>
@@ -377,7 +413,7 @@ export default function EventsPage() {
                     variant="ghost"
                     size="icon"
                     className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                    onClick={() => handleDelete(event._id)}
+                    onClick={() => setIsDeleteConfirm(event._id)} // Show delete confirmation modal
                   >
                     <Trash className="h-4 w-4" />
                   </Button>
