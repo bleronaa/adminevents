@@ -67,14 +67,14 @@ export default function Dashboard() {
     <div className="flex-1 p-8 pt-6 bg-gradient-to-r from-indigo-50 to-blue-100">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-4xl font-extrabold text-gray-800">Dashboard</h2>
-          <p className="text-lg text-gray-600 mt-1">Your platform's performance at a glance</p>
+          <h2 className="text-4xl font-extrabold text-gray-800">Paneli</h2>
+          <p className="text-lg text-gray-600 mt-1">Performanca e platformës suaj me një shikim</p>
         </div>
         <button 
           onClick={handleLogout}
           className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg"
         >
-          Logout
+          Dilni
         </button>
       </div>
 
