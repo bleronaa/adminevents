@@ -138,23 +138,23 @@ export default function RegistrationsPage() {
               </TableRow>
             ) : (
               registrations
-                .filter((registration) => registration.event)
-                .map((registration) => (
-                  <TableRow key={registration._id}>
-                    <TableCell>{registration.user.name}</TableCell>
-                    <TableCell>{registration.event.title}</TableCell>
-                    <TableCell>{registration.status}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="mr-2"
-                        onClick={() => handleEditStatus(registration)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+              .filter((registration) => registration.event && registration.user)
+              .map((registration) => (
+                <TableRow key={registration._id}>
+                  <TableCell>{registration.user.name}</TableCell>
+                  <TableCell>{registration.event.title}</TableCell>
+                  <TableCell>{registration.status}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="mr-2"
+                      onClick={() => handleEditStatus(registration)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
                 ))
             )}
           </TableBody>
