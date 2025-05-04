@@ -9,13 +9,15 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-
+  
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     try {
-      const response = await axios.post("http://localhost:3001/api/auth/admin-login", { email, password });
+      const response = await axios.post(`${baseUrl}/api/auth/admin-login`, { email, password });
 
       if (response.status === 200) {
         const user = response.data.user;

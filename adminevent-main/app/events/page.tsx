@@ -60,6 +60,8 @@ export default function EventsPage() {
     image: null,
   });
 
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   // Fetch events from API
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -72,7 +74,8 @@ export default function EventsPage() {
     setTokenExists(true); // Tregon që ekziston tokeni
     const fetchEvents = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/events");
+        const response = await fetch(`${baseUrl}/api/events`);
+      
         const data: Event[] = await response.json();
         setEvents(data);
       } catch (error) {
@@ -95,7 +98,7 @@ export default function EventsPage() {
   const handleDelete = async (id: string) => {
     console.log("Duke fshirë event me ID:", id);
     try {
-      const res = await fetch(`http://localhost:3001/api/events/${id}`, {
+      const res = await fetch(`${baseUrl}/api/events/${id}`, {
         method: "DELETE",
       });
   
@@ -124,7 +127,7 @@ export default function EventsPage() {
     if (!editingEvent) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/api/events/${editingEvent._id}`, {
+      const response = await fetch(`${baseUrl}/api/events/${editingEvent._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -185,7 +188,7 @@ export default function EventsPage() {
       }
       console.log("Dërgimi i të dhënave", formData);
 
-      const response = await fetch("http://localhost:3001/api/events", {
+      const response = await fetch(`${baseUrl}/api/events`, {
         method: "POST",
         body: formData,
       });

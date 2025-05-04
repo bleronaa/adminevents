@@ -30,6 +30,8 @@ export default function RegistrationsPage() {
   const [newStatus, setNewStatus] = useState<"pending" | "confirmed" | "cancelled">("pending");
   const [loading, setLoading] = useState(true);
 
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -40,7 +42,7 @@ export default function RegistrationsPage() {
 
     const fetchRegistrations = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/registrations", {
+        const response = await fetch(`${baseUrl}/api/registrations`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -79,7 +81,7 @@ export default function RegistrationsPage() {
       }
 
       const response = await fetch(
-        `http://localhost:3001/api/registrations/${selectedRegistration._id}`,
+        `${baseUrl}/api/registrations/${selectedRegistration._id}`,
         {
           method: "PUT",
           headers: {

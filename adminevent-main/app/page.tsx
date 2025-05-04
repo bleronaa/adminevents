@@ -14,6 +14,8 @@ export default function Dashboard() {
   const [totalEvents, setTotalEvents] = useState<number | null>(null);
   const [totalUsers, setTotalUsers] = useState<number | null>(null);
 
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -26,7 +28,7 @@ export default function Dashboard() {
 
     const fetchTotalEvents = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/events/total-events");
+        const response = await fetch(`${baseUrl}/api/events/total-events`);
         if (!response.ok) throw new Error("Failed to fetch total events");
         const data = await response.json();
         setTotalEvents(data.totalEvents);
@@ -37,7 +39,7 @@ export default function Dashboard() {
 
     const fetchTotalUsers = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/users/total-users");
+        const response = await fetch(`${baseUrl}/api/users/total-users`);
         if (!response.ok) throw new Error("Failed to fetch total users");
         const data = await response.json();
         setTotalUsers(data.totalUsers);
@@ -46,10 +48,15 @@ export default function Dashboard() {
       }
     };
 
+    if (!baseUrl) {
+      console.error("API base URL is not defined in .env.local");
+      return;
+    }
+
     Promise.all([fetchTotalEvents(), fetchTotalUsers()]).finally(() => {
       setLoading(false);
     });
-  }, [router]);
+  }, [router, baseUrl]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");

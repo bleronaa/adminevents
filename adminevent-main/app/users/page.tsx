@@ -31,6 +31,8 @@ export default function UsersPage() {
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [tokenExists, setTokenExists] = useState(false);
 
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -43,7 +45,7 @@ export default function UsersPage() {
 
     const fetchUsers = async () => {
       try {
-        const response = await fetch("http://localhost:3001/api/users");
+        const response = await fetch(`${baseUrl}/api/users`);
         const data = await response.json();
         setUsers(data);
       } catch (error) {
@@ -59,7 +61,7 @@ export default function UsersPage() {
     if (!deleteUserId) return;
 
     try {
-      const res = await fetch(`http://localhost:3001/api/users/${deleteUserId}`, {
+      const res = await fetch(`${baseUrl}/api/users/${deleteUserId}`, {
         method: "DELETE",
       });
 
@@ -88,7 +90,7 @@ export default function UsersPage() {
     if (!editedUser) return;
 
     try {
-      const res = await fetch(`http://localhost:3001/api/users/${editedUser._id}`, {
+      const res = await fetch(`${baseUrl}/api/users/${editedUser._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -113,7 +115,7 @@ export default function UsersPage() {
 
   const handleAddUser = async () => {
     try {
-      const res = await fetch("http://localhost:3001/api/users", {
+      const res = await fetch(`${baseUrl}/api/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
