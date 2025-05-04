@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Pencil, Trash } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 interface Registration {
@@ -46,15 +46,13 @@ export default function RegistrationsPage() {
           },
         });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch registrations");
-        }
+        if (!response.ok) throw new Error("Failed to fetch registrations");
 
         const data = await response.json();
         setRegistrations(data);
       } catch (error) {
         console.error("Failed to load registrations:", error);
-        toast.error("Failed to load registrations");
+        toast.error("Nuk u mundësua ngarkimi i regjistrimeve.");
       } finally {
         setLoading(false);
       }
@@ -75,71 +73,73 @@ export default function RegistrationsPage() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        toast.error("Authorization token missing");
+        toast.error("Token mungon");
         router.push("/login");
         return;
       }
 
-      const response = await fetch(`http://localhost:3001/api/registrations/${selectedRegistration._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
+      const response = await fetch(
+        `http://localhost:3001/api/registrations/${selectedRegistration._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
 
       const updatedRegistration = await response.json();
 
       if (response.ok) {
-        setRegistrations(
-          registrations.map((reg) =>
-            reg._id === updatedRegistration._id ? updatedRegistration : reg
-          )
+        setRegistrations((prev) =>
+          prev.map((reg) => (reg._id === updatedRegistration._id ? updatedRegistration : reg))
         );
         setIsModalOpen(false);
-        toast.success("Registration status updated successfully");
+        toast.success("Statusi u përditësua me sukses");
       } else {
-        console.error("Failed to update registration status:", updatedRegistration);
-        toast.error(updatedRegistration.error || "Failed to update registration status");
+        toast.error(updatedRegistration.error || "Gabim gjatë përditësimit");
       }
     } catch (error) {
       console.error("Error updating status:", error);
-      toast.error("Error updating registration status");
+      toast.error("Gabim gjatë përditësimit të regjistrimit");
     }
   };
 
   if (loading) {
-    return <div className="flex-1 p-8 pt-6">Loading...</div>;
+    return <div className="flex-1 p-8 pt-6">Duke u ngarkuar...</div>;
   }
+
+  const validRegistrations = registrations.filter(
+    (reg) => reg.user && reg.event
+  );
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Registrations</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Regjistrimet</h2>
       </div>
 
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Event</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Përdoruesi</TableHead>
+              <TableHead>Ngjarja</TableHead>
+              <TableHead>Statusi</TableHead>
+              <TableHead className="text-right">Veprime</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {registrations.length === 0 ? (
+            {validRegistrations.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center text-muted-foreground">
-                  No active registrations.
+                  Nuk ka regjistrime aktive për momentin.
                 </TableCell>
               </TableRow>
             ) : (
-              registrations
-              .filter((registration) => registration.event && registration.user)
-              .map((registration) => (
+              validRegistrations.map((registration) => (
                 <TableRow key={registration._id}>
                   <TableCell>{registration.user.name}</TableCell>
                   <TableCell>{registration.event.title}</TableCell>
@@ -155,59 +155,52 @@ export default function RegistrationsPage() {
                     </Button>
                   </TableCell>
                 </TableRow>
-                ))
+              ))
             )}
           </TableBody>
         </Table>
       </div>
 
-      {/* Modal for editing status */}
+      {/* Modal */}
       {isModalOpen && selectedRegistration && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg w-1/3">
-            <h3 className="text-xl font-bold mb-4">Edit Registration Status</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4">Ndrysho statusin</h3>
             <div className="mb-4">
-              <label htmlFor="user" className="block mb-2">
-                User
-              </label>
+              <label className="block mb-1">Përdoruesi</label>
               <input
-                id="user"
                 type="text"
                 value={selectedRegistration.user.name}
                 readOnly
-                className="w-full border p-2 rounded mb-4"
+                className="w-full border p-2 rounded mb-3"
               />
-              <label htmlFor="event" className="block mb-2">
-                Event
-              </label>
+
+              <label className="block mb-1">Ngjarja</label>
               <input
-                id="event"
                 type="text"
                 value={selectedRegistration.event.title}
                 readOnly
-                className="w-full border p-2 rounded mb-4"
+                className="w-full border p-2 rounded mb-3"
               />
-              <label htmlFor="status" className="block mb-2">
-                Status
-              </label>
+
+              <label className="block mb-1">Statusi</label>
               <select
-                id="status"
                 value={newStatus}
                 onChange={(e) =>
                   setNewStatus(e.target.value as "pending" | "confirmed" | "cancelled")
                 }
                 className="w-full border p-2 rounded"
               >
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="pending">Në pritje</option>
+                <option value="confirmed">I konfirmuar</option>
+                <option value="cancelled">Anuluar</option>
               </select>
             </div>
             <div className="flex justify-end space-x-4">
               <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-                Cancel
+                Anulo
               </Button>
-              <Button onClick={handleStatusChange}>Save</Button>
+              <Button onClick={handleStatusChange}>Ruaj</Button>
             </div>
           </div>
         </div>
