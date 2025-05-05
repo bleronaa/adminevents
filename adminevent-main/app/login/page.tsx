@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -7,23 +9,29 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  
+
+  // Merre URL-në nga .env
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     try {
-      const response = await axios.post(`${baseUrl}/api/auth/admin-login`, { email, password });
+      // Dergo POST request te backend-i për login
+      const response = await axios.post(`${baseUrl}/api/auth/admin-login`, {
+        email,
+        password,
+      });
 
+      // Nëse login-i është i suksesshëm
       if (response.status === 200) {
-        const user = response.data.user;
+        const { user, token } = response.data;
 
-        // Lista e adminëve të lejuar
+        // Verifiko nëse përdoruesi është admin i lejuar
         const allowedAdmins = [
           "blerona.tmava@umib.net",
-          "habibtmava06@gmail.com"
+          "habibtmava06@gmail.com",
         ];
 
         if (!allowedAdmins.includes(user.email)) {
@@ -31,25 +39,37 @@ export default function Login() {
           return;
         }
 
-        // Ruaj token-in në localStorage ose cookies
-        localStorage.setItem("token", response.data.token);
-        router.push("/"); // Rruga ku do ridrejtohet pas login-it
+        // Ruaj token në localStorage
+        localStorage.setItem("token", token);
+
+        // Redirekto në dashboard ose faqen kryesore
+        router.push("/");
       }
-    } catch (err) {
-      setError("Invalid credentials or login failed.");
+    } catch (err: any) {
+      // Nëse ka error nga backend, shfaq mesazhin
+      const message =
+        err?.response?.data?.error ||
+        err?.message ||
+        "Invalid credentials or login failed.";
+      setError(message);
     }
   };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <div className="w-full max-w-sm p-8 space-y-6 bg-white shadow-lg rounded-lg">
-        <h2 className="text-3xl font-bold text-center text-blue-600">Admin Login</h2>
+        <h2 className="text-3xl font-bold text-center text-blue-600">
+          Admin Login
+        </h2>
 
         {error && <p className="text-red-500 text-center">{error}</p>}
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
+            >
               Email
             </label>
             <input
@@ -62,7 +82,10 @@ export default function Login() {
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
               Password
             </label>
             <input
