@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
+import axios, { AxiosError } from "axios";
 
 interface Registration {
   _id: string;
@@ -29,8 +30,14 @@ export default function RegistrationsPage() {
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
   const [newStatus, setNewStatus] = useState<"pending" | "confirmed" | "cancelled">("pending");
   const [loading, setLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false); // Shto gjendje për përditësimin
 
+  // Validimi i baseUrl
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!baseUrl) {
+    console.error("NEXT_PUBLIC_API_BASE_URL is not defined");
+    toast.error("Configuration error. Please contact support.");
+  }
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -42,19 +49,21 @@ export default function RegistrationsPage() {
 
     const fetchRegistrations = async () => {
       try {
-        const response = await fetch(`${baseUrl}/api/registrations`, {
+        const response = await axios.get(`${baseUrl}/api/registrations`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          withCredentials: true, // Mbështet kredenciale
         });
 
-        if (!response.ok) throw new Error("Failed to fetch registrations");
-
-        const data = await response.json();
-        setRegistrations(data);
+        setRegistrations(response.data);
       } catch (error) {
         console.error("Failed to load registrations:", error);
-        toast.error("Nuk u mundësua ngarkimi i regjistrimeve.");
+        if (error instanceof AxiosError) {
+          toast.error(error.response?.data?.error || "Nuk u mundësua ngarkimi i regjistrimeve.");
+        } else {
+          toast.error("An unexpected error occurred.");
+        }
       } finally {
         setLoading(false);
       }
@@ -72,6 +81,8 @@ export default function RegistrationsPage() {
   const handleStatusChange = async () => {
     if (!selectedRegistration) return;
 
+    setIsUpdating(true);
+
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -80,32 +91,31 @@ export default function RegistrationsPage() {
         return;
       }
 
-      const response = await fetch(
+      const response = await axios.put(
         `${baseUrl}/api/registrations/${selectedRegistration._id}`,
+        { status: newStatus },
         {
-          method: "PUT",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ status: newStatus }),
+          withCredentials: true, // Mbështet kredenciale
         }
       );
 
-      const updatedRegistration = await response.json();
-
-      if (response.ok) {
-        setRegistrations((prev) =>
-          prev.map((reg) => (reg._id === updatedRegistration._id ? updatedRegistration : reg))
-        );
-        setIsModalOpen(false);
-        toast.success("Statusi u përditësua me sukses");
-      } else {
-        toast.error(updatedRegistration.error || "Gabim gjatë përditësimit");
-      }
+      setRegistrations((prev) =>
+        prev.map((reg) => (reg._id === response.data._id ? response.data : reg))
+      );
+      setIsModalOpen(false);
+      toast.success("Statusi u përditësua me sukses");
     } catch (error) {
       console.error("Error updating status:", error);
-      toast.error("Gabim gjatë përditësimit të regjistrimit");
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data?.error || "Gabim gjatë përditësimit të regjistrimit");
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -163,7 +173,6 @@ export default function RegistrationsPage() {
         </Table>
       </div>
 
-      {/* Modal */}
       {isModalOpen && selectedRegistration && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-md">
@@ -192,6 +201,7 @@ export default function RegistrationsPage() {
                   setNewStatus(e.target.value as "pending" | "confirmed" | "cancelled")
                 }
                 className="w-full border p-2 rounded"
+                disabled={isUpdating}
               >
                 <option value="pending">Në pritje</option>
                 <option value="confirmed">I konfirmuar</option>
@@ -199,10 +209,16 @@ export default function RegistrationsPage() {
               </select>
             </div>
             <div className="flex justify-end space-x-4">
-              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}
+                disabled={isUpdating}
+              >
                 Anulo
               </Button>
-              <Button onClick={handleStatusChange}>Ruaj</Button>
+              <Button onClick={handleStatusChange} disabled={isUpdating}>
+                {isUpdating ? "Duke ruajtur..." : "Ruaj"}
+              </Button>
             </div>
           </div>
         </div>

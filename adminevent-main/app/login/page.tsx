@@ -2,22 +2,45 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface LoginResponse {
+  token: string;
+  user: User;
+}
 
 export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  
+  const [isLoading, setIsLoading] = useState(false); // Shto gjendje loading
+
+  // Sigurohu që baseUrl është vendosur
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  
+  if (!baseUrl) {
+    console.error("NEXT_PUBLIC_API_BASE_URL is not defined");
+    setError("Configuration error. Please contact support.");
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
 
     try {
-      const response = await axios.post(`${baseUrl}/api/auth/admin-login`, { email, password });
+      const response = await axios.post<LoginResponse>(
+        `${baseUrl}/api/auth/admin-login`,
+        { email, password },
+        { withCredentials: true } // Mbështet kredenciale
+      );
 
       if (response.status === 200) {
         const user = response.data.user;
@@ -25,7 +48,7 @@ export default function Login() {
         // Lista e adminëve të lejuar
         const allowedAdmins = [
           "blerona.tmava@umib.net",
-          "habibtmava06@gmail.com"
+          "habibtmava06@gmail.com",
         ];
 
         if (!allowedAdmins.includes(user.email)) {
@@ -33,12 +56,20 @@ export default function Login() {
           return;
         }
 
-        // Ruaj token-in në localStorage ose cookies
+        // Ruaj token-in në localStorage
         localStorage.setItem("token", response.data.token);
-        router.push("/"); // Rruga ku do ridrejtohet pas login-it
+        router.push("/"); // Ridrejtimi pas login-it
       }
     } catch (err) {
-      setError("Invalid credentials or login failed.");
+      // Trajto error-et nga Axios
+      if (err instanceof AxiosError) {
+        const message = err.response?.data?.error || "Invalid credentials or login failed.";
+        setError(message);
+      } else {
+        setError("An unexpected error occurred.");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -79,9 +110,10 @@ export default function Login() {
           <div>
             <button
               type="submit"
-              className="w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={isLoading}
+              className={`w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              Login
+              {isLoading ? "Logging in..." : "Login"}
             </button>
           </div>
         </form>
