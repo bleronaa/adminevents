@@ -210,3 +210,7 @@
 //     </div>
 //   );
 // }
+
+export default function RegistrationsPage() {
+  return <div>Faqja e regjistrimeve është në zhvillim...</div>;
+}
