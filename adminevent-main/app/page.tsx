@@ -74,10 +74,10 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen flex-1 p-4 sm:p-6 lg:p-8 bg-gradient-to-r from-indigo-50 to-blue-50">
       <div className="container mx-auto">
+        
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8">
           <div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-800">Paneli</h2>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">Performanca e platformës suaj me një shikim</p>
           </div>
           <Button
             onClick={handleLogout}

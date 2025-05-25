@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -15,10 +14,11 @@ import {
 import { Plus, Pencil, Trash, Search, Calendar, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
-
-
-// Define the Event interface
+// Përcakto interfejsin për Event
 interface Event {
   _id: string;
   title: string;
@@ -26,7 +26,9 @@ interface Event {
   category: string;
   location: string;
   capacity: number;
-  // image?: string;
+  description?: string;
+  image?: string;
+
 }
 
 export default function EventsPage() {
@@ -34,13 +36,12 @@ export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
+  const [editingEvent, setEditingEvent] = useState<Partial<Event> | null>(null);
   const [tokenExists, setTokenExists] = useState(false);
-  const [isDeleteConfirm, setIsDeleteConfirm] = useState<string | null>(null); 
+  const [isDeleteConfirm, setIsDeleteConfirm] = useState<string | null>(null);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
-  
 
-  // State for managing new event modal and form data
+  // Gjendja për modalin e shtimit të eventit të ri dhe të dhënat e formularit
   const [isAdding, setIsAdding] = useState(false);
   const [newEvent, setNewEvent] = useState<{
     _id: string;
@@ -62,7 +63,7 @@ export default function EventsPage() {
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  // Fetch events from API
+  // Merr eventet nga API
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -75,18 +76,17 @@ export default function EventsPage() {
     const fetchEvents = async () => {
       try {
         const response = await fetch(`${baseUrl}/api/events`);
-      
         const data: Event[] = await response.json();
         setEvents(data);
       } catch (error) {
-        console.error("Error fetching events:", error);
+        console.error("Gabim gjatë marrjes së eventeve:", error);
       }
     };
 
     fetchEvents();
   }, []);
 
-  // Filter events based on search query
+  // Filtro eventet bazuar në kërkimin
   const filteredEvents = events.filter(
     (event) =>
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -94,37 +94,36 @@ export default function EventsPage() {
       event.location.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Handle delete event
+  // Fshi një event
   const handleDelete = async (id: string) => {
-    console.log("Duke fshirë event me ID:", id);
     try {
       const res = await fetch(`${baseUrl}/api/events/${id}`, {
         method: "DELETE",
       });
-  
+
       if (res.ok) {
-        console.log("Event u fshi");
-        // Fshij eventin nga state pa pasur nevojë të rifreskosh nga API
         setEvents((prevEvents) => prevEvents.filter((event) => event._id !== id));
-        setDeleteSuccess(true); // Shfaq mesazhin e suksesit
-  
-        // Mbyll modalin e konfirmimit
+        setDeleteSuccess(true);
         setIsDeleteConfirm(null);
+        toast.success("Eventi u fshi me sukses");
       } else {
         console.log("Dështoi fshirja e eventit");
+        toast.error("Gabim gjatë fshirjes së eventit");
       }
     } catch (err) {
-      console.log("Error deleting", err);
+      console.log("Gabim gjatë fshirjes:", err);
+      toast.error("Gabim gjatë fshirjes së eventit");
     }
   };
-    // Handle cancel delete
-    const cancelDelete = () => {
-      setIsDeleteConfirm(null);
-    };
 
-  // Handle update event
+  // Anulo fshirjen
+  const cancelDelete = () => {
+    setIsDeleteConfirm(null);
+  };
+
+  // Përditëso eventin
   const handleUpdate = async () => {
-    if (!editingEvent) return;
+    if (!editingEvent || !editingEvent._id) return;
 
     try {
       const response = await fetch(`${baseUrl}/api/events/${editingEvent._id}`, {
@@ -137,7 +136,7 @@ export default function EventsPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert("Gabim: " + error.error);
+        toast.error("Gabim: " + error.error);
         return;
       }
 
@@ -147,34 +146,46 @@ export default function EventsPage() {
       );
       setIsEditing(false);
       setEditingEvent(null);
+      toast.success("Eventi u përditësua me sukses");
     } catch (error) {
       console.error("Gabim gjatë përditësimit:", error);
+      toast.error("Gabim gjatë përditësimit të eventit");
     }
   };
 
+  // Fillo editimin e një eventi
   const handleEditClick = (event: Event) => {
-    setEditingEvent(event);
+    setEditingEvent({
+      _id: event._id,
+      title: event.title,
+      description: event.description,
+      date: new Date(event.date).toISOString().slice(0, 16),
+      location: event.location,
+      capacity: event.capacity,
+      category: event.category,
+      image: event.image,
+    });
     setIsEditing(true);
   };
 
-  // Handle add new event modal toggle
+  // Ndërro gjendjen e modalit të shtimit të eventit
   const handleAddNewEvent = () => {
     setIsAdding(!isAdding);
   };
 
-  // Handle form input change for new event (tekstual)
+  // Menaxho ndryshimet në fushat e formularit për eventin e ri
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
     setNewEvent({ ...newEvent, [field]: e.target.value });
   };
 
-  // Handle file input change për imazhin
+  // Menaxho ndryshimin e skedarit të imazhit
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setNewEvent({ ...newEvent, image: e.target.files[0] });
     }
   };
 
-  // Handle creating a new event me file upload duke përdorur FormData
+  // Krijo një event të ri duke përdorur FormData
   const handleCreateEvent = async () => {
     try {
       const formData = new FormData();
@@ -186,7 +197,6 @@ export default function EventsPage() {
       if (newEvent.image) {
         formData.append("image", newEvent.image);
       }
-      console.log("Dërgimi i të dhënave", formData);
 
       const response = await fetch(`${baseUrl}/api/events`, {
         method: "POST",
@@ -206,11 +216,14 @@ export default function EventsPage() {
           capacity: 0,
           image: null,
         });
+        toast.success("Eventi u krijua me sukses");
       } else {
-        console.error("Failed to create event");
+        console.error("Dështoi krijimi i eventit");
+        toast.error("Gabim gjatë krijimit të eventit");
       }
     } catch (error) {
-      console.error("Error creating event:", error);
+      console.error("Gabim gjatë krijimit të eventit:", error);
+      toast.error("Gabim gjatë krijimit të eventit");
     }
   };
 
@@ -219,29 +232,22 @@ export default function EventsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-            Menaxhimi i enteve
+            Menaxhimi i eventeve
           </h2>
           <p className="text-sm text-gray-500 mt-1">
-           Organizo dhe menaxho eventet ne universitet
+            Organizo dhe menaxho eventet në universitet
           </p>
         </div>
-        {/* <div className="flex items-center gap-4">
-          <Button className="flex items-center gap-2" onClick={handleAddNewEvent}>
-            <Plus className="h-4 w-4" />
-            Add New Event
-          </Button>
-        </div> */}
       </div>
 
-
-      {/* Success Message */}
+      {/* Mesazhi i suksesit për fshirje */}
       {deleteSuccess && (
         <div className="p-4 mb-4 bg-green-100 text-green-700 rounded">
           Eventi u fshi me sukses!
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Dialogu i konfirmimit për fshirje */}
       {isDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl space-y-4">
@@ -259,11 +265,11 @@ export default function EventsPage() {
         </div>
       )}
 
-      {/* Add New Event Modal */}
+      {/* Modali për shtimin e eventit të ri */}
       {isAdding && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl space-y-4">
-            <h2 className="text-lg font-bold">Shto një event te ri</h2>
+            <h2 className="text-lg font-bold">Shto një event të ri</h2>
             <Input
               type="text"
               value={newEvent.title}
@@ -293,13 +299,10 @@ export default function EventsPage() {
               onChange={(e) => handleInputChange(e, "capacity")}
               placeholder="Kapaciteti"
             />
-            
-            {/* File Input per imazhin e eventit */}
             <Input type="file" accept="image/*" onChange={handleImageChange} />
-
             <div className="flex justify-end gap-2 pt-4">
               <Button variant="outline" onClick={handleAddNewEvent}>
-                Cancel
+                Anulo
               </Button>
               <Button onClick={handleCreateEvent}>Ruaj</Button>
             </div>
@@ -317,15 +320,11 @@ export default function EventsPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-blue-600">Eventet totale</p>
-                <h3 className="text-3xl font-bold text-gray-900">
-                  {events.length}
-                </h3>
-            
+                <h3 className="text-3xl font-bold text-gray-900">{events.length}</h3>
               </div>
             </div>
           </div>
         </Card>
-
         <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-purple-50 to-violet-50">
           <div className="p-6">
             <div className="flex items-center space-x-4">
@@ -344,7 +343,7 @@ export default function EventsPage() {
         </Card>
       </div>
 
-      {/* Events Table */}
+      {/* Tabela e eventeve */}
       <div className="bg-white rounded-xl border shadow-sm">
         <div className="p-4 border-b">
           <div className="flex items-center gap-4">
@@ -374,7 +373,6 @@ export default function EventsPage() {
               <TableRow key={event._id} className="hover:bg-gray-50/50">
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    {/* Nëse dëshiron të shfaqësh imazhin, shto një <img> me event.image */}
                     <div>
                       <div className="font-medium">{event.title}</div>
                       <div className="text-sm text-gray-500">
@@ -390,9 +388,9 @@ export default function EventsPage() {
                 </TableCell>
                 <TableCell>
                   <div className="text-sm">
-                    {new Date(event.date).toLocaleDateString("en-US", {
+                    {new Date(event.date).toLocaleDateString("sq-AL", {
                       year: "numeric",
-                      month: "short",
+                      month: "long",
                       day: "numeric",
                     })}
                   </div>
@@ -416,7 +414,7 @@ export default function EventsPage() {
                     variant="ghost"
                     size="icon"
                     className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                    onClick={() => setIsDeleteConfirm(event._id)} // Show delete confirmation modal
+                    onClick={() => setIsDeleteConfirm(event._id)}
                   >
                     <Trash className="h-4 w-4" />
                   </Button>
@@ -426,53 +424,134 @@ export default function EventsPage() {
           </TableBody>
         </Table>
 
-        {/* Edit Event Modal */}
+        {/* Modali për editimin e eventit */}
         {isEditing && editingEvent && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl space-y-4">
               <h2 className="text-lg font-bold">Përditëso Eventin</h2>
-              <Input
-                type="text"
-                name="title"
-                value={editingEvent.title}
-                onChange={(e) =>
-                  setEditingEvent({ ...editingEvent, title: e.target.value })
-                }
-                placeholder="Titulli"
-              />
-              <Input
-                type="text"
-                name="category"
-                value={editingEvent.category}
-                onChange={(e) =>
-                  setEditingEvent({ ...editingEvent, category: e.target.value })
-                }
-                placeholder="Kategoria"
-              />
-              <Input
-                type="text"
-                name="location"
-                value={editingEvent.location}
-                onChange={(e) =>
-                  setEditingEvent({ ...editingEvent, location: e.target.value })
-                }
-                placeholder="Lokacioni"
-              />
-              <Input
-                type="date"
-                name="date"
-                value={editingEvent.date.slice(0, 10)}
-                onChange={(e) =>
-                  setEditingEvent({ ...editingEvent, date: e.target.value })
-                }
-              />
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setIsEditing(false)}>
-                  Anulo
-                </Button>
-                <Button onClick={handleUpdate}>Ruaj</Button>
-              </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleUpdate();
+                }}
+                className="space-y-4"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor={`title-${editingEvent._id}`} className="text-sm sm:text-base">
+                    Titulli
+                  </Label>
+                  <Input
+                    id={`title-${editingEvent._id}`}
+                    value={editingEvent.title || ""}
+                    onChange={(e) =>
+                      setEditingEvent({ ...editingEvent, title: e.target.value })
+                    }
+                    required
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`description-${editingEvent._id}`} className="text-sm sm:text-base">
+                    Përshkrimi
+                  </Label>
+                  <Input
+                    id={`description-${editingEvent._id}`}
+                    value={editingEvent.description || ""}
+                    onChange={(e) =>
+                      setEditingEvent({ ...editingEvent, description: e.target.value })
+                    }
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`date-${editingEvent._id}`} className="text-sm sm:text-base">
+                    Data dhe Ora
+                  </Label>
+                  <Input
+                    id={`date-${editingEvent._id}`}
+                    type="datetime-local"
+                    value={editingEvent.date || ""}
+                    onChange={(e) =>
+                      setEditingEvent({ ...editingEvent, date: e.target.value })
+                    }
+                    required
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`location-${editingEvent._id}`} className="text-sm sm:text-base">
+                    Vendndodhja
+                  </Label>
+                  <Input
+                    id={`location-${editingEvent._id}`}
+                    value={editingEvent.location || ""}
+                    onChange={(e) =>
+                      setEditingEvent({ ...editingEvent, location: e.target.value })
+                    }
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`capacity-${editingEvent._id}`} className="text-sm sm:text-base">
+                    Kapaciteti
+                  </Label>
+                  <Input
+                    id={`capacity-${editingEvent._id}`}
+                    type="number"
+                    value={editingEvent.capacity || ""}
+                    onChange={(e) =>
+                      setEditingEvent({
+                        ...editingEvent,
+                        capacity: parseInt(e.target.value) || undefined,
+                      })
+                    }
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`category-${editingEvent._id}`} className="text-sm sm:text-base">
+                    Kategoria
+                  </Label>
+                  <Select
+                    value={editingEvent.category || ""}
+                    onValueChange={(value) =>
+                      setEditingEvent({ ...editingEvent, category: value })
+                    }
+                  >
+                    <SelectTrigger id={`category-${editingEvent._id}`} className="w-full">
+                      <SelectValue placeholder="Zgjidh kategorinë" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Inxh.Kompjuterike">Inxhinieri Kompjuterike</SelectItem>
+                      <SelectItem value="Inxh.Mekanike">Inxhinieri Mekanike</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`image-${editingEvent._id}`} className="text-sm sm:text-base">
+                    URL e Imazhit
+                  </Label>
+                  <Input
+                    id={`image-${editingEvent._id}`}
+                    value={editingEvent.image || ""}
+                    onChange={(e) =>
+                      setEditingEvent({ ...editingEvent, image: e.target.value })
+                    }
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button type="submit" className="w-full sm:w-auto">Ruaj ndryshimet</Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditing(false)}
+                    className="w-full sm:w-auto"
+                  >
+                    Anulo
+                  </Button>
+                </div>
+              </form>
             </div>
           </div>
         )}

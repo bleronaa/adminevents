@@ -28,12 +28,12 @@ const routes = [
     href: "/events",
     color: "text-blue-500",
   },
-  {
-    label: "Regjistrime",
-    icon: ClipboardList,
-    href: "/registrations",
-    color: "text-blue-600",
-  },
+  // {
+  //   label: "Regjistrime",
+  //   icon: ClipboardList,
+  //   href: "/registrations",
+  //   color: "text-blue-600",
+  // },
 ];
 
 export default function Sidebar() {
