@@ -17,6 +17,8 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { format, parseISO } from "date-fns";
+import { sq } from "date-fns/locale"; // Shto locale për shqip
 
 // Përcakto interfejsin për Event
 interface Event {
@@ -28,7 +30,6 @@ interface Event {
   capacity: number;
   description?: string;
   image?: string;
-
 }
 
 export default function EventsPage() {
@@ -72,7 +73,7 @@ export default function EventsPage() {
       return;
     }
 
-    setTokenExists(true); // Tregon që ekziston tokeni
+    setTokenExists(true);
     const fetchEvents = async () => {
       try {
         const response = await fetch(`${baseUrl}/api/events`);
@@ -84,7 +85,7 @@ export default function EventsPage() {
     };
 
     fetchEvents();
-  }, []);
+  }, [router, baseUrl]);
 
   // Filtro eventet bazuar në kërkimin
   const filteredEvents = events.filter(
@@ -126,12 +127,18 @@ export default function EventsPage() {
     if (!editingEvent || !editingEvent._id) return;
 
     try {
+      // Konverto datën në UTC
+      const utcDate = editingEvent.date ? new Date(editingEvent.date).toISOString() : undefined;
+
       const response = await fetch(`${baseUrl}/api/events/${editingEvent._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(editingEvent),
+        body: JSON.stringify({
+          ...editingEvent,
+          date: utcDate, // Dërgo datën në UTC
+        }),
       });
 
       if (!response.ok) {
@@ -153,13 +160,24 @@ export default function EventsPage() {
     }
   };
 
+  // Konverto datën ISO në formatin datetime-local
+  const toDatetimeLocal = (isoString: string) => {
+    try {
+      const date = parseISO(isoString);
+      return format(date, "yyyy-MM-dd'T'HH:mm");
+    } catch (error) {
+      console.error("Gabim gjatë konvertimit të datës:", error);
+      return "";
+    }
+  };
+
   // Fillo editimin e një eventi
   const handleEditClick = (event: Event) => {
     setEditingEvent({
       _id: event._id,
       title: event.title,
       description: event.description,
-      date: new Date(event.date).toISOString().slice(0, 16),
+      date: toDatetimeLocal(event.date), // Formato për datetime-local
       location: event.location,
       capacity: event.capacity,
       category: event.category,
@@ -190,13 +208,15 @@ export default function EventsPage() {
     try {
       const formData = new FormData();
       formData.append("title", newEvent.title);
-      formData.append("date", newEvent.date);
+      formData.append("date", new Date(newEvent.date).toISOString()); // Konverto në UTC
       formData.append("category", newEvent.category);
       formData.append("location", newEvent.location);
       formData.append("capacity", newEvent.capacity.toString());
       if (newEvent.image) {
         formData.append("image", newEvent.image);
       }
+      // Shto organizatorin (nëse është i nevojshëm)
+      formData.append("organizer", "66991a19c345b7e2e0b0e0b8"); // Zëvendëso me ID-në e vërtetë
 
       const response = await fetch(`${baseUrl}/api/events`, {
         method: "POST",
@@ -218,8 +238,9 @@ export default function EventsPage() {
         });
         toast.success("Eventi u krijua me sukses");
       } else {
-        console.error("Dështoi krijimi i eventit");
-        toast.error("Gabim gjatë krijimit të eventit");
+        const error = await response.json();
+        console.error("Dështoi krijimi i eventit:", error);
+        toast.error("Gabim gjatë krijimit të eventit: " + error.error);
       }
     } catch (error) {
       console.error("Gabim gjatë krijimit të eventit:", error);
@@ -238,6 +259,9 @@ export default function EventsPage() {
             Organizo dhe menaxho eventet në universitet
           </p>
         </div>
+        <Button onClick={handleAddNewEvent}>
+          <Plus className="mr-2 h-4 w-4" /> Shto Event
+        </Button>
       </div>
 
       {/* Mesazhi i suksesit për fshirje */}
@@ -289,7 +313,7 @@ export default function EventsPage() {
               placeholder="Lokacioni"
             />
             <Input
-              type="date"
+              type="datetime-local"
               value={newEvent.date}
               onChange={(e) => handleInputChange(e, "date")}
             />
@@ -388,11 +412,7 @@ export default function EventsPage() {
                 </TableCell>
                 <TableCell>
                   <div className="text-sm">
-                    {new Date(event.date).toLocaleDateString("sq-AL", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    {format(parseISO(event.date), "dd MMMM yyyy, HH:mm", { locale: sq })} {/* Shfaq në lokal */}
                   </div>
                 </TableCell>
                 <TableCell>
