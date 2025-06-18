@@ -57,28 +57,36 @@ export default function UsersPage() {
     fetchUsers();
   }, [router]);
 
-  const handleDeleteUser = async () => {
-    if (!deleteUserId) return;
+const handleDeleteUser = async () => {
+  if (!deleteUserId) return;
 
-    try {
-      const res = await fetch(`${baseUrl}/api/users/${deleteUserId}`, {
-        method: "DELETE",
-      });
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${baseUrl}/api/users/${deleteUserId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": deleteUserId, // Shto ID-në e përdoruesit këtu
+        Authorization: `Bearer ${token}`, // Opsionale, nëse përdor token
+      },
+    });
 
-      if (res.ok) {
-        setUsers((prevUsers) => prevUsers.filter((user) => user._id !== deleteUserId));
-        toast.success("Përdoruesi u fshi me sukses.");
-      } else {
-        toast.error("Fshirja dështoi.");
-      }
-    } catch (error) {
-      console.error("Gabim gjatë fshirjes së përdoruesit:", error);
-      toast.error("Gabim gjatë fshirjes së përdoruesit.");
-    } finally {
-      setIsDeleteOpen(false);
-      setDeleteUserId(null);
+    if (res.ok) {
+      setUsers((prevUsers) => prevUsers.filter((user) => user._id !== deleteUserId));
+      toast.success("Përdoruesi u fshi me sukses.");
+    } else {
+      const errorData = await res.json();
+      console.error("Gabim nga serveri:", errorData);
+      toast.error(errorData.error || "Fshirja dështoi.");
     }
-  };
+  } catch (error) {
+    console.error("Gabim gjatë fshirjes së përdoruesit:", error);
+    toast.error("Gabim gjatë fshirjes së përdoruesit.");
+  } finally {
+    setIsDeleteOpen(false);
+    setDeleteUserId(null);
+  }
+};
 
   const handleEditUser = (user: User) => {
     setSelectedUser(user);
